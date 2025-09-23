@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel ="stylesheet" href="style/adminstyle.css" />
+    <script src="js/accionDashboard.js" defer></script>
+</head>
+<body>
+    <div class ="Contenido">
+        <!-- Barra lateral -->
+        <aside class="sidebar" aria-label="Menú">
+             <div class="logo" aria-hidden="true">
+                <img src ="Img/poyo.jpg">
+                <nav class="menu">
+                    <ul>
+                        <li><a id="link-paginaprincipal" href="Pag.html">Página Principal</a></li>
+                        <li><a id="link-productos" href="Productos-admin.html">Productos</a></li>
+                        <li><a id="link-usuarios" href="Usuarios.html">Usuarios</a></li>
+                        <li><a class="danger" href="#" id="btnVolver">Volver</a></li>
+                    </ul>
+                </nav>
+
+             </div>
+        </aside>
+
+        <div class ="main-area">
+            <header class ="topbar" role ="banner">
+                <h1>Panel de Administración</h1>
+            </header>
+            <main id="contenido" class="content" role="main">
+                <article class="card activity-box" aria-label="Actividades recientes">
+                    <header class="activity-header">
+                        <h2>Actividades Recientes</h2>
+                        <span class="activity-badge" id="total-activities">0 eventos</span>
+                    </header>
+                    
+                    <div class="activity-list">
+                        <div class="activity-item">
+                            <span class="activity-icon">🛒</span>
+                            <div class="activity-content">
+                                <p class="activity-text">Nueva venta realizada</p>
+                                <span class="activity-time">Hace 5 min</span>
+                            </div>
+                        </div>
+                        
+                        <div class="activity-item">
+                            <span class="activity-icon">⭐</span>
+                            <div class="activity-content">
+                                <p class="activity-text">Usuario comentó un producto</p>
+                                <span class="activity-time">Hace 12 min</span>
+                            </div>
+                        </div>
+                        
+                        <div class="activity-item">
+                            <span class="activity-icon">👤</span>
+                            <div class="activity-content">
+                                <p class="activity-text">Nuevo usuario registrado: Maria23</p>
+                                <span class="activity-time">Hace 25 min</span>
+                            </div>
+                        </div>
+                        
+                        <div class="activity-item warning">
+                            <span class="activity-icon">⚠️</span>
+                            <div class="activity-content">
+                                <p class="activity-text">Stock bajo: Gato</p>
+                                <span class="activity-time">Hace 40 min</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <footer class="activity-footer">
+                        <small>Actualizado: <span id="last-update">--:--</span></small>
+                    </footer>
+                </article>
+
+                <article class="card kpi">
+                    <h2>Usuarios</h2>
+                    <p class="kpi-value" id="kpi-usuarios">0</p>
+                    <button id="btn-ir-usuarios" class="button">Agregar Usuario</button>
+                </article>
+
+                <article class="card kpi">
+                    <h2>Productos</h2>
+                    <p class="kpi-value" id="kpi-productos">0</p>
+                    <button id="btn-ir-productos" class="button">Agregar Producto</button>
+                </article>
+
+                <article class="card kpi">
+                    <h2>Stock bajo</h2>
+                    <p class="kpi-value" id="kpi-stock-bajo">0</p>
+                    <button id="btn-ir-reponer" class="button">Reponer Stock</button>
+                </article>
+
+            </main>
+        </div>
+    </div>
+
+    <footer class="social-bar" aria-label="Redes sociales y contacto">
+        <div class="social-content">
+            <span class="social-text">Síguenos en:</span>
+            <div class="social-icons">
+                <a href="https://www.facebook.com/ponyipoyi?locale=es_LA" class="social-link" aria-label="Facebook">
+                    <span class="social-icon">📘</span>
+                    <span class="social-name">Facebook</span>
+                </a>
+                <a href="https://www.instagram.com/latiendadelsenorpoyi/" class="social-link" aria-label="Instagram">
+                    <span class="social-icon">📸</span>
+                    <span class="social-name">Instagram</span>
+                </a>
+            </div>
+        </div>
+    </footer>
+    
+</body>
+</html>

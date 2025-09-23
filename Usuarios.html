@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel ="stylesheet" href="style/userstyle.css" />
+    <script src="js/accionUsuario.js" defer></script>
+    <title>Usuarios</title>
+</head>
+<body>
+    <div class="Despliegue">
+        <aside class="sidebar" aria-label="Menú">
+             <div class="logo" aria-hidden="true">
+                <img src ="Img/poyo.jpg">
+                <nav class="menu">
+                    <ul>
+                        <li><a id="link-paginaprincipal" href="index.html">Página Principal</a></li>
+                        <li><a id="link-dashboard" href="Dashboard.html">Página Administrativa</a></li>
+                        <li><a id="link-productos" href="Productos.html">Productos</a></li>
+                        <li><a class="danger" href="#" id="btnVolver">Volver</a></li>
+                    </ul>
+                </nav>
+             </div>
+        </aside>
+        <div class="menusito">
+            <header class="la barrita de arriba">
+                <h1>Usuarios</h1>
+            </header>
+
+            <main class ="el coso que muestra el otro coso">
+                <button id="btnAgregarUsuario" class="button">Agregar Usuario</button>
+
+                <section class="card">
+                    <h2>Lista de Usuarios</h2>
+                    <table id="tablaUsuarios" class="table">
+                        <thead>
+                            <tr>
+                                <th>RUN</th>
+                                <th>Nombre</th>
+                                <th>Apellidos</th>
+                                <th>Correo Electrónico</th>
+                                <th>Rol</th>
+                                <th>Region</th>
+                                <th>Comuna</th>
+                                <th>Dirección</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Las filas de productos se agregarán aquí dinámicamente -->
+                        </tbody>
+                    </table>
+                </section>
+            </main>
+        </div>
+    </div>
+
+
+    <div id="modalUsuario" class="modal hidden">
+        <div class="modal-content card">
+            <h2 id="modalUsuarioTitulo">Agregar Usuario</h2>
+            <form id="formUsuario">
+
+                <label>RUN 
+                    <input type="text" id="runUsuario" required placeholder="Ej: 19011022K">
+                </label>
+
+                <label>Nombre 
+                    <input type="text" id="nombreUsuario" required maxlength="50">
+                </label>
+
+                <label>Apellidos 
+                    <input type="text" id="apellidosUsuario" required maxlength="100">
+                </label>
+
+                <label>Correo Electrónico 
+                    <input type="email" id="correoUsuario" required placeholder="ejemplo@duoc.cl">
+                </label>
+
+                <label>Rol
+                    <select id="rolUsuario" required>
+                    <option value="">Seleccione un rol</option>
+                    <option value="Administrador">Administrador</option>
+                    <option value="Cliente">Cliente</option>
+                    <option value="Vendedor">Vendedor</option>
+                    </select>
+                </label>
+
+                <label>Región
+                    <select id="comunaPorRegion" required>
+                    <option value="">Seleccione una región</option>
+                    <option value="Arica y Parinacota">Arica y Parinacota</option>
+                    <option value="Tarapacá">Tarapacá</option>
+                    <option value="Antofagasta">Antofagasta</option>
+                    <option value="Atacama">Atacama</option>
+                    <option value="Coquimbo">Coquimbo</option>
+                    <option value="Valparaiso">Valparaíso</option>
+                    <option value="Metropolitana">Región Metropolitana</option>
+                    <option value="O'Higgins">O'Higgins</option>
+                    <option value="Maule">Maule</option>
+                    <option value="Ñuble">Ñuble</option>
+                    <option value="Biobio">Biobío</option>
+                    <option value="Araucanía">Araucanía</option>
+                    <option value="Los Ríos">Los Ríos</option>
+                    <option value="Los Lagos">Los Lagos</option>
+                    <option value="Aysén">Aysén</option>
+                    <option value="Magallanes">Magallanes</option>
+                    </select>
+                </label>
+
+                <label>Comuna
+                    <select id="comunaUsuario" required>
+                    <option value="">Seleccione una comuna</option>
+                    
+                    </select>
+                </label>
+
+                <label>Dirección
+                    <input type="text" id="direccionUsuario" required maxlength="300">
+                </label>
+
+                <div class="modal-actions">
+                    <button type="submit" class="button">Guardar</button>
+                    <button type="button" id="cerrarModalUsuario" class="button danger">Cancelar</button>
+                </div>
+            </form>
+            
+        </div>
+    </div>
+
+
+
+    <footer class="social-bar" aria-label="Redes sociales y contacto">
+        <div class="social-content">
+            <span class="social-text">Síguenos en:</span>
+            <div class="social-icons">
+                <a href="https://www.facebook.com/ponyipoyi?locale=es_LA" class="social-link" aria-label="Facebook">
+                    <span class="social-icon">📘</span>
+                    <span class="social-name">Facebook</span>
+                </a>
+                <a href="https://www.instagram.com/latiendadelsenorpoyi/" class="social-link" aria-label="Instagram">
+                    <span class="social-icon">📸</span>
+                    <span class="social-name">Instagram</span>
+                </a>
+            </div>
+        </div>
+    </footer>
+    
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La tienda del Señor Poyi</title>
+    <link rel="icon" href="imagenes/Logo.jpg" type="image/png">
+    <link rel="stylesheet" href="estilos.css">
+    <script defer src="script.js"></script>
+</head>
+
+<body>
+<header>
+    <h1>🐥 Tienda Porcelana Fría</h1>
+    <nav class="nav-flex">
+        <ul class="nav-menu">
+            <li><a href="Pag.html" id="btn-inicio">Inicio</a></li> 
+            <li><a href="productos.html">Productos</a></li>
+            <li><a href="blog.html">Blog</a></li>
+            <li><a href="carrito.html">Carrito</a></li>
+        </ul>
+        <ul class="nav-login">
+            <button id="btn-logout" style="display:none;">Cerrar Sesión</button>
+            <li><a href="Login.html" id="btn-login">Iniciar Sesión</a></li>
+        </ul>
+    </nav>
+    <div id ="bienvenida"></div>
+</header>
+
+
+
+    <main>
+        <section>
+            <h2>Bienvenidos a nuestra PyME 🐣</h2>
+            <p>Ofrecemos productos hechos a mano en porcelana fría, únicos y personalizados.</p>
+            <p>Realizamos envíos por pagar a todo Chile. 💌</p>
+        </section>
+
+        <section>
+            <h2>Productos Destacados</h2>
+
+            <div class="producto">
+                <img src="imagenes/Productos/Cat.png" alt="Figura de Animalito">
+                <h3><a href="Detalle-Producto.html" id="btn-gato">Figura de gato</a></h3>
+                <p>Hecha a mano en porcelana fría, ideal para decoración o regalo.</p>
+                <p class="precio">$15.000 CLP</p>
+                <button class="btn-comprar">Comprar</button>
+            </div>
+
+            <div class="producto">
+                <img src="imagenes/Productos/Kirbo.png" alt="Kirbo">
+                <h3>Kirbo</h3>
+                <p>Kirbo pero modo kraici</p>
+                <p class="precio">$12.000 CLP</p>
+                <button class="btn-comprar">Comprar</button>
+            </div>
+
+            <div class="producto">
+                <img src="imagenes/Productos/Archer-Cat.png" alt="Figura de Perro">
+                <h3>Gato arquero</h3>
+                <p>Un gato valiente listo para la aventura, hecho a mano en porcelana fría.</p>
+                <p class="precio">$18.000 CLP</p>
+                <button class="btn-comprar">Comprar</button>
+            </div>
+
+            <div class="producto">
+                <img src="imagenes/Productos/Lintern-Cat.png" alt="Figura de Perro">
+                <h3>Gato con Linterna</h3>
+                <p>Este curioso gato ilumina tu espacio con ternura y creatividad.</p>
+                <p class="precio">$18.000 CLP</p>
+                <button class="btn-comprar">Comprar</button>
+            </div>
+
+        </section>
+        <section class="video-container">
+            <h2>Video de presentación</h2>
+            <video controls autoplay muted loop>
+                <source src="video presentacion.mp4" type="video/mp4">
+                Tu navegador no soporta el video.
+            </video>
+        </section>
+    </main>
+<footer>
+    <div class="footer-container">
+        <h3>Contáctanos</h3>
+        <p>Si tienes algún problema con tu compra, el envío o necesitas ayuda, escríbenos en nuestras redes o por correo.</p>
+        <ul class="footer-links">     
+        <li><a href="https://www.instagram.com/latiendadelsenorpoyi/" target="_blank">Instagram</a></li>
+        <li><a href="mailto:keila.gonzalez.f@gmail.com">Correo electrónico</a></li>
+        </ul>
+        <p class="footer-copy">&copy; 2025 Latiendadelsenorpoyi
+. Todos los derechos reservados.</p>
+    </div>
+</footer>
+<script>
+  // mostrar usuario logeado
+  const userData = localStorage.getItem("usuarioLogueado");
+  if (userData) {
+    const user = JSON.parse(userData); // volver a objeto
+    document.getElementById("bienvenida").innerText = `Bienvenido, ${user.email}`;
+  }
+</script>
+</body>
+</html>
