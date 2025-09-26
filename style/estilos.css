@@ -337,8 +337,8 @@ footer {
 .video-container video {
   width: 60%;   /* cambia este valor: 60%, 50%, etc */
   max-width: 600px; /* para que no crezca demasiado en pantallas grandes */
-  border-radius: 10px; /* opcional: esquinas redondeadas */
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2); /* opcional: sombra */
+  border-radius: 10px; 
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2); 
 }
 
 /* ====== NAVBAR GENERAL ====== */
