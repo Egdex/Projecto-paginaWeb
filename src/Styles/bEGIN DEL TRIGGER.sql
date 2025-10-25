@@ -1,0 +1,13 @@
+BEGIN
+    INSERT INTO VENTA_TICKETS
+    VALUES(30, '22/05/2018', 29000, 3000, 12456905);
+    UPDATE VENTA_TICKETS SET monto_ticket = 67590
+    WHERE nro_ticket = 21;
+    UPDATE VENTA_TICKETS SET monto_ticket = 23000
+    WHERE nro_ticket = 13;
+    DELETE FROM VENTA_TICKETS
+    WHERE nro_ticket = 12;
+    COMMIT;
+END;    
+
+

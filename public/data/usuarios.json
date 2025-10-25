@@ -1,0 +1,29 @@
+
+{
+  "usuarios": [
+    {
+      "id": "1",
+      "run": "11.111.111-1",
+      "nombre": "Admin",
+      "apellidos": "Prueba",
+      "correo": "admin@tienda.com",
+      "rol": "Administrador"
+    },
+    {
+      "id": "2",
+      "run": "22.222.222-2",
+      "nombre": "Juanito",
+      "apellidos": "Pérez",
+      "correo": "juanito@cliente.com",
+      "rol": "Cliente"
+    },
+    {
+      "id": "3",
+      "run": "33.333.333-3",
+      "nombre": "María",
+      "apellidos": "González",
+      "correo": "maria@cliente.com",
+      "rol": "Cliente"
+    }
+  ]
+}

@@ -1,0 +1,256 @@
+/* =====================
+   VARIABLES
+   ===================== */
+:root {
+  --sidebar-bg: #ffeaf4;
+  --main-bg: #fff;
+  --accent: #ff8ac6;
+  --accent-dark: #d94e8f;
+  --text: #444;
+  --text-light: #777;
+  --radius: 12px;
+  --shadow: 0 4px 6px rgba(0,0,0,0.1);
+  --font: "Poppins", Arial, sans-serif;
+}
+
+/* =====================
+   RESET
+   ===================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font);
+  background: #fdfbff;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+/* =====================
+   LAYOUT
+   ===================== */
+.Despliegue {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 100vh;
+}
+
+/* =====================
+   SIDEBAR
+   ===================== */
+.sidebar {
+  background: var(--sidebar-bg);
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-right: 3px solid var(--accent);
+}
+
+.sidebar .logo img {
+  max-width: 100%;
+  margin-bottom: 2rem;
+}
+
+.sidebar ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sidebar a {
+  display: block;
+  text-decoration: none;
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius);
+  background: white;
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: var(--shadow);
+  transition: background-color 0.25s, color 0.25s, transform 0.18s;
+}
+
+.sidebar a:hover,
+.sidebar a.active {
+  background: var(--accent);
+  color: white;
+  transform: translateX(4px);
+}
+
+.sidebar a.danger {
+  background: #ffd6d6;
+  color: #a33;
+}
+
+/* =====================
+   MAIN AREA
+   ===================== */
+.menusito {
+  background: var(--main-bg);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.menusito header h1 {
+  font-size: 1.8rem;
+  color: var(--accent-dark);
+  margin-bottom: 1rem;
+}
+
+/* =====================
+   BOTONES
+   ===================== */
+.button {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.25s, transform 0.18s;
+}
+
+.button:hover {
+  background: var(--accent-dark);
+  transform: translateY(-2px);
+}
+
+.button.danger {
+  background: #e74c3c;
+}
+
+/* =====================
+   TABLA
+   ===================== */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.table th,
+.table td {
+  border: 1px solid #ddd;
+  padding: 0.8rem;
+  text-align: left;
+}
+
+.table th {
+  background: var(--accent);
+  color: white;
+}
+
+.table tr:nth-child(even) {
+  background: #f9f9f9;
+}
+
+/* =====================
+   CARDS
+   ===================== */
+.card {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.5rem;
+  transition: transform 0.2s;
+}
+
+.card:hover {
+  transform: scale(1.01);
+}
+
+/* =====================
+   MODAL
+   ===================== */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal.hidden { display: none; }
+
+.modal-content {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 2rem;
+  max-width: 400px;
+  width: 100%;
+}
+
+.modal-content form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.modal-content label {
+  font-weight: 500;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+/* =====================
+   FOOTER SOCIAL
+   ===================== */
+.social-bar {
+  background: var(--accent);
+  color: white;
+  padding: 1rem;
+  margin-top: auto;
+}
+
+.social-content {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.social-link {
+  text-decoration: none;
+  color: white;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* =====================
+   RESPONSIVE
+   ===================== */
+@media (max-width: 768px) {
+  .Despliegue {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    border-right: none;
+    border-bottom: 3px solid var(--accent);
+  }
+
+  .sidebar ul {
+    flex-direction: row;
+    gap: 0.5rem;
+  }
+}
