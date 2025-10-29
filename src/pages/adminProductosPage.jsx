@@ -5,9 +5,23 @@ import { getProductos } from '../services/productServices';
 
 export function AdminProductosPage() {
   
+  // Estados de la pagina
   const [productos, setProductos] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
+  
+  // estado formulario
+  const [nuevoProducto, setNuevoProducto] = useState({
+    id: '',
+    nombre: '',
+    descripcion: '',
+    precio: 0,
+    stock: 0
+  });
+  
+  // estado errores
+  const [errores, setErrores] = useState({});
 
+  // Carga inicial de productos
   useEffect(() => {
     const cargarProductos = async () => {
       try {
@@ -20,7 +34,38 @@ export function AdminProductosPage() {
     cargarProductos();
   }, []);
 
+  // maneja cambios en el form
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    setNuevoProducto((prev) => ({
+      ...prev,
+      [name]: value 
+    }));
+  };
+
+  // validar form
+  const validarFormulario = () => {
+    let nuevosErrores = {};
+    
+    if (!nuevoProducto.id) nuevosErrores.id = "El ID es obligatorio";
+    if (!nuevoProducto.nombre) nuevosErrores.nombre = "El Nombre es obligatorio";
+    if (nuevoProducto.precio <= 0) nuevosErrores.precio = "El Precio debe ser mayor a 0";
+    if (nuevoProducto.stock < 0) nuevosErrores.stock = "El Stock no puede ser negativo";
+
+    setErrores(nuevosErrores);
+    return Object.keys(nuevosErrores).length === 0;
+  };
+
+  // limpiar form y abrir modal
   const handleAbrirModal = () => {
+    setNuevoProducto({
+      id: '',
+      nombre: '',
+      descripcion: '',
+      precio: 0,
+      stock: 0
+    });
+    setErrores({});
     setModalVisible(true);
   };
 
@@ -28,11 +73,18 @@ export function AdminProductosPage() {
     setModalVisible(false);
   };
   
+  // guardar producto
   const handleGuardarProducto = (e) => {
-    e.preventDefault(); // Evita que la página se recargue
-    alert("Guardando producto (simulación)...");
-    // (Aquí irá la lógica para llamar a la API y crear el producto)
-    handleCerrarModal(); // Cierra el modal después de guardar
+    e.preventDefault();
+    
+    // valida
+    const esValido = validarFormulario();
+    
+    if (esValido) {
+      alert("¡Formulario válido! Guardando producto (simulación)...");
+      // aqui va la llamada a la API
+      handleCerrarModal();
+    }
   };
 
   return (
@@ -46,7 +98,7 @@ export function AdminProductosPage() {
           Agregar Producto
         </button>
 
-        <section className="card">
+         <section className="card">
           <h2>Lista de Productos</h2>
           <table id="tablaProductos" className="table">
             <thead>
@@ -60,6 +112,7 @@ export function AdminProductosPage() {
               </tr>
             </thead>
             <tbody>
+              {/* Mapeo de productos */}
               {productos.map((prod) => (
                 <tr key={prod.id}>
                   <td>{prod.id}</td>
@@ -78,22 +131,68 @@ export function AdminProductosPage() {
         </section>
       </main>
 
-      {/* --- MODAL DINÁMICO (AHORA CON EL FORMULARIO) --- */}
+      {/* Modal (dinamico) */}
       {modalVisible && (
         <div id="modalProducto" className="modal">
           <div className="modal-content card">
             <h2 id="modalProductoTitulo">Agregar Producto</h2>
             
-            {/* Agregamos 'onSubmit' al form */}
             <form id="formProducto" onSubmit={handleGuardarProducto}>
               
-              {/* --- ¡AQUÍ ESTÁ TU FORMULARIO! --- */}
-              <label>ID <input type="text" id="idProducto" required /></label>
-              <label>Nombre <input type="text" id="nombreProducto" required /></label>
-              <label>Descripción <input type="text" id="descripcionProducto" required /></label>
-              <label>Precio <input type="number" id="precioProducto" required /></label>
-              <label>Stock <input type="number" id="stockProducto" required /></label>
-              {/* ---------------------------------- */}
+              <label>ID
+                <input 
+                  type="text" 
+                  id="id"       
+                  name="id"      
+                  value={nuevoProducto.id} 
+                  onChange={handleFormChange}
+                />
+              </label>
+              {/* mostrar error */}
+              {errores.id && <p style={{color: 'red'}}>{errores.id}</p>}
+
+              <label>Nombre
+                <input 
+                  type="text" 
+                  id="nombre"   
+                  name="nombre"   
+                  value={nuevoProducto.nombre} 
+                  onChange={handleFormChange}
+                />
+              </label>
+              {errores.nombre && <p style={{color: 'red'}}>{errores.nombre}</p>}
+
+              <label>Descripción
+                <input 
+                  type="text" 
+                  id="descripcion"  
+                  name="descripcion"  
+                  value={nuevoProducto.descripcion} 
+                  onChange={handleFormChange}
+                />
+              </label>
+              
+              <label>Precio
+                <input 
+                  type="number" 
+                  id="precio"    
+                  name="precio"    
+                  value={nuevoProducto.precio} 
+                  onChange={handleFormChange}
+                />
+              </label>
+              {errores.precio && <p style={{color: 'red'}}>{errores.precio}</p>}
+
+              <label>Stock
+                <input 
+                  type="number" 
+                  id="stock"     
+                  name="stock"     
+                  value={nuevoProducto.stock} 
+                  onChange={handleFormChange}
+                />
+              </label>
+              {errores.stock && <p style={{color: 'red'}}>{errores.stock}</p>}
               
               <div className="modal-actions">
                 <button type="submit" className="button">Guardar</button>
@@ -106,7 +205,6 @@ export function AdminProductosPage() {
           </div>
         </div>
       )}
-
     </div>
   );
 }

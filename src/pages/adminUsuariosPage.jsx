@@ -1,46 +1,129 @@
 // src/pages/adminUsuariosPage.jsx
-import React, { useState, useEffect } from 'react'; // ¡Importamos!
-
-// Importamos los estilos
+import React, { useState, useEffect } from 'react';
 import '../styles/userstyle.css';
-
-// ¡Importamos el NUEVO servicio!
 import { getUsuarios } from '../services/userServices';
+
+// --- ¡NUEVO! Mini-BD de Comunas ---
+// (Podemos agregar más regiones después)
+const comunasPorRegion = {
+  "Metropolitana": ["Pudahuel", "Maipú", "Puente Alto", "Santiago", "Las Condes", "La Florida"],
+  "Valparaíso": ["Valparaíso", "Viña del Mar", "Quilpué", "Concón"],
+  "Biobío": ["Concepción", "Talcahuano", "Los Ángeles"]
+};
+// ---------------------------------
 
 export function AdminUsuariosPage() {
 
-  // --- ESTADO ---
+  // Estados de la pagina
   const [usuarios, setUsuarios] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
+  
+  // ¡NUEVO! Estado para las comunas del dropdown
+  const [comunasDisponibles, setComunasDisponibles] = useState([]);
 
-  // --- EFECTO ---
-  // Se ejecuta al cargar la página
+  // estado formulario
+  const [nuevoUsuario, setNuevoUsuario] = useState({
+    run: '',
+    nombre: '',
+    apellidos: '',
+    correo: '',
+    rol: '',
+    region: '',
+    comuna: '',
+    direccion: ''
+  });
+
+  // estado errores
+  const [errores, setErrores] = useState({});
+
+  // Carga inicial de usuarios
   useEffect(() => {
     const cargarUsuarios = async () => {
       try {
-        const data = await getUsuarios(); // Llama al nuevo servicio
-        setUsuarios(data); // Guarda los usuarios en el estado
+        const data = await getUsuarios();
+        setUsuarios(data);
       } catch (error) {
         console.error("Error al cargar usuarios:", error);
       }
     };
-    
     cargarUsuarios();
   }, []);
 
-  // --- HANDLERS (Manejadores de eventos) ---
+  // --- ¡ACTUALIZADO! Maneja cambios en el form ---
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    
+    setNuevoUsuario((prev) => ({
+      ...prev,
+      [name]: value
+    }));
+
+    // --- ¡NUEVA LÓGICA! ---
+    // Si el campo que cambió es "region"...
+    if (name === "region") {
+      // Busca las comunas para esa región. Si no hay (ej: "Seleccione"), usa un array vacío.
+      const comunas = comunasPorRegion[value] || [];
+      setComunasDisponibles(comunas);
+      
+      // ¡Importante! Resetea la comuna seleccionada
+      setNuevoUsuario((prev) => ({
+        ...prev,
+        comuna: "" 
+      }));
+    }
+    // -----------------------
+  };
+
+  // validar form
+  const validarFormulario = () => {
+    let nuevosErrores = {};
+    
+    if (!nuevoUsuario.run) nuevosErrores.run = "El RUN es obligatorio";
+    if (!nuevoUsuario.nombre) nuevosErrores.nombre = "El Nombre es obligatorio";
+    if (!nuevoUsuario.apellidos) nuevosErrores.apellidos = "Los Apellidos son obligatorios";
+    if (!nuevoUsuario.correo) {
+      nuevosErrores.correo = "El Correo es obligatorio";
+    } else if (!/\S+@\S+\.\S+/.test(nuevoUsuario.correo)) {
+      nuevosErrores.correo = "El formato de correo no es válido";
+    }
+    if (!nuevoUsuario.rol) nuevosErrores.rol = "Debe seleccionar un Rol";
+    if (!nuevoUsuario.region) nuevosErrores.region = "Debe seleccionar una Región";
+    if (!nuevoUsuario.comuna) nuevosErrores.comuna = "Debe seleccionar una Comuna"; // ¡Nueva validación!
+
+    setErrores(nuevosErrores);
+    return Object.keys(nuevosErrores).length === 0;
+  };
+
+  // limpiar form y abrir modal
   const handleAbrirModal = () => {
+    setNuevoUsuario({
+      run: '',
+      nombre: '',
+      apellidos: '',
+      correo: '',
+      rol: '',
+      region: '',
+      comuna: '',
+      direccion: ''
+    });
+    setErrores({});
+    setComunasDisponibles([]); // ¡NUEVO! Limpia las comunas al abrir
     setModalVisible(true);
   };
 
   const handleCerrarModal = () => {
     setModalVisible(false);
   };
-  
+
+  // guardar usuario
   const handleGuardarUsuario = (e) => {
     e.preventDefault();
-    alert("Guardando usuario (simulación)...");
-    handleCerrarModal(); // Cierra el modal
+    const esValido = validarFormulario();
+    
+    if (esValido) {
+      alert("¡Formulario válido! Guardando usuario (simulación)...");
+      handleCerrarModal();
+    }
   };
 
   return (
@@ -50,13 +133,14 @@ export function AdminUsuariosPage() {
       </header>
 
       <main className="el coso que muestra el otro coso">
+        {/* ... (Botón y tabla se quedan igual) ... */}
         <button id="btnAgregarUsuario" className="button" onClick={handleAbrirModal}>
           Agregar Usuario
         </button>
-
         <section className="card">
           <h2>Lista de Usuarios</h2>
           <table id="tablaUsuarios" className="table">
+            {/* ... (thead y tbody se quedan igual) ... */}
             <thead>
               <tr>
                 <th>RUN</th>
@@ -68,8 +152,6 @@ export function AdminUsuariosPage() {
               </tr>
             </thead>
             <tbody>
-              {/* --- ¡AQUÍ LA MAGIA! ---
-                  Mapeamos la lista de usuarios del estado */}
               {usuarios.map((user) => (
                 <tr key={user.id}>
                   <td>{user.run}</td>
@@ -88,49 +170,76 @@ export function AdminUsuariosPage() {
         </section>
       </main>
 
-      {/* --- MODAL DINÁMICO (CON EL FORMULARIO DE USUARIOS) --- */}
+      {/* Modal (dinamico) */}
       {modalVisible && (
         <div id="modalUsuario" className="modal">
           <div className="modal-content card">
             <h2 id="modalUsuarioTitulo">Agregar Usuario</h2>
             
-            {/* Usamos el formulario de tu Usuarios.html */}
             <form id="formUsuario" onSubmit={handleGuardarUsuario}>
               
+              {/* ... (Inputs de RUN, Nombre, Apellidos, Correo, Rol se quedan igual) ... */}
               <label>RUN 
-                <input type="text" id="runUsuario" required placeholder="Ej: 19011022K" />
+                <input type="text" name="run" value={nuevoUsuario.run} onChange={handleFormChange} placeholder="Ej: 19011022K" />
               </label>
+              {errores.run && <p style={{color: 'red'}}>{errores.run}</p>}
+
               <label>Nombre 
-                <input type="text" id="nombreUsuario" required maxLength="50" />
+                <input type="text" name="nombre" value={nuevoUsuario.nombre} onChange={handleFormChange} maxLength="50" />
               </label>
+              {errores.nombre && <p style={{color: 'red'}}>{errores.nombre}</p>}
+
               <label>Apellidos 
-                <input type="text" id="apellidosUsuario" required maxLength="100" />
+                <input type="text" name="apellidos" value={nuevoUsuario.apellidos} onChange={handleFormChange} maxLength="100" />
               </label>
+              {errores.apellidos && <p style={{color: 'red'}}>{errores.apellidos}</p>}
+
               <label>Correo Electrónico 
-                <input type="email" id="correoUsuario" required placeholder="ejemplo@duoc.cl" />
+                <input type="email" name="correo" value={nuevoUsuario.correo} onChange={handleFormChange} placeholder="ejemplo@duoc.cl" />
               </label>
+              {errores.correo && <p style={{color: 'red'}}>{errores.correo}</p>}
+
               <label>Rol
-                <select id="rolUsuario" required>
+                <select name="rol" value={nuevoUsuario.rol} onChange={handleFormChange}>
                   <option value="">Seleccione un rol</option>
                   <option value="Administrador">Administrador</option>
                   <option value="Cliente">Cliente</option>
                 </select>
               </label>
+              {errores.rol && <p style={{color: 'red'}}>{errores.rol}</p>}
+              
+              {/* --- ¡DROPDOWNS ACTUALIZADOS! --- */}
               <label>Región
-                <select id="comunaPorRegion" required>
+                <select name="region" value={nuevoUsuario.region} onChange={handleFormChange}>
                   <option value="">Seleccione una región</option>
-                  <option value="Metropolitana">Región Metropolitana</option>
-                  {/* (Puedes agregar el resto de regiones de tu HTML) */}
+                  {/* Mapeamos las llaves de nuestro objeto de comunas */}
+                  {Object.keys(comunasPorRegion).map((region) => (
+                    <option key={region} value={region}>{region}</option>
+                  ))}
                 </select>
               </label>
+              {errores.region && <p style={{color: 'red'}}>{errores.region}</p>}
+
               <label>Comuna
-                <select id="comunaUsuario" required>
+                {/* Se deshabilita si no hay región seleccionada */}
+                <select 
+                  name="comuna" 
+                  value={nuevoUsuario.comuna} 
+                  onChange={handleFormChange} 
+                  disabled={comunasDisponibles.length === 0}
+                >
                   <option value="">Seleccione una comuna</option>
-                  {/* (Esto lo haremos dinámico más adelante) */}
+                  {/* Mapeamos las comunas disponibles del estado */}
+                  {comunasDisponibles.map((comuna) => (
+                    <option key={comuna} value={comuna}>{comuna}</option>
+                  ))}
                 </select>
               </label>
+              {errores.comuna && <p style={{color: 'red'}}>{errores.comuna}</p>}
+              {/* ---------------------------------- */}
+              
               <label>Dirección
-                <input type="text" id="direccionUsuario" required maxLength="300" />
+                <input type="text" name="direccion" value={nuevoUsuario.direccion} onChange={handleFormChange} maxLength="300" />
               </label>
 
               <div className="modal-actions">
