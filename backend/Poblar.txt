@@ -1,0 +1,51 @@
+En fecha de creación pon NOW
+
+INSERT INTO categoria (nombre) VALUES
+('Figuras de Juegos'),
+('Figuras de Caricaturas'),
+('Fantasia'),
+('Mini figuras'),
+('Colgantes');
+
+INSERT INTO producto (nombre, descripcion, precio, stock, estado, categoria_id, creacion_producto, imagen) VALUES
+(''),
+(''),
+(''),
+(''),
+(''),
+(''),
+(''),
+(''),
+(''),
+(''),
+('');
+
+INSERT INTO region (nombre) VALUES
+('Región Metropolitana'),
+('Región de Valparaíso');
+
+INSERT INTO comuna (nombre, region_id) VALUES
+('Santiago', 1),
+('Puente Alto', 1),
+('Valparaíso', 2);
+
+INSERT INTO categoria (id, nombre) VALUES
+(1,'Decoracion'),
+(2,'Animado'),
+(3,'Fantasy');
+
+INSERT INTO usuario (
+    run, nombre, apellidos, email, password, rol, estado, direccion, comuna_id, region_id
+) VALUES (
+    '21197542.3', 
+    'Ruth', 
+    'Gonzalez', 
+    'rut.gonzalez@duocuc.cl', 
+    '123456', 
+    'ADMIN', 
+    true, 
+    'Calle de los Gatos 42', 
+    11, 
+    1
+);
+
