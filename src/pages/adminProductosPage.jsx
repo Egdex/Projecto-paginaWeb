@@ -1,7 +1,8 @@
 // src/pages/adminProductosPage.jsx
 import React, { useState, useEffect } from 'react';
 import '../styles/productostyle.css';
-import { getProductos } from '../services/productServices';
+// ¡Importamos las funciones que usan la API!
+import { getProductos, guardarProducto } from '../services/productServices.js';
 
 export function AdminProductosPage() {
   
@@ -9,30 +10,32 @@ export function AdminProductosPage() {
   const [productos, setProductos] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   
-  // estado formulario
+  // estado formulario (los campos del modal)
   const [nuevoProducto, setNuevoProducto] = useState({
-    id: '',
     nombre: '',
     descripcion: '',
     precio: 0,
-    stock: 0
+    stock: 0,
+    imagen: ''
   });
   
   // estado errores
   const [errores, setErrores] = useState({});
 
-  // Carga inicial de productos
+  // Carga inicial de productos (desde la API)
   useEffect(() => {
-    const cargarProductos = async () => {
-      try {
-        const data = await getProductos();
-        setProductos(data);
-      } catch (error) {
-        console.error("Error al cargar productos:", error);
-      }
-    };
     cargarProductos();
   }, []);
+
+  // Función para cargar (reutilizable)
+  const cargarProductos = async () => {
+    try {
+      const data = await getProductos(); 
+      setProductos(data);
+    } catch (error) {
+      console.error("Error al cargar productos:", error);
+    }
+  };
 
   // maneja cambios en el form
   const handleFormChange = (e) => {
@@ -46,11 +49,10 @@ export function AdminProductosPage() {
   // validar form
   const validarFormulario = () => {
     let nuevosErrores = {};
-    
-    if (!nuevoProducto.id) nuevosErrores.id = "El ID es obligatorio";
     if (!nuevoProducto.nombre) nuevosErrores.nombre = "El Nombre es obligatorio";
     if (nuevoProducto.precio <= 0) nuevosErrores.precio = "El Precio debe ser mayor a 0";
-    if (nuevoProducto.stock < 0) nuevosErrores.stock = "El Stock no puede ser negativo";
+    if (nuevoProducto.stock <= 0) nuevosErrores.stock = "El Stock debe ser mayor a 0"; // (Cambiado de <0 a <=0)
+    if (!nuevoProducto.imagen) nuevosErrores.imagen = "La Ruta de Imagen es obligatoria";
 
     setErrores(nuevosErrores);
     return Object.keys(nuevosErrores).length === 0;
@@ -59,11 +61,7 @@ export function AdminProductosPage() {
   // limpiar form y abrir modal
   const handleAbrirModal = () => {
     setNuevoProducto({
-      id: '',
-      nombre: '',
-      descripcion: '',
-      precio: 0,
-      stock: 0
+      nombre: '', descripcion: '', precio: 0, stock: 0, imagen: '' 
     });
     setErrores({});
     setModalVisible(true);
@@ -73,17 +71,44 @@ export function AdminProductosPage() {
     setModalVisible(false);
   };
   
-  // guardar producto
-  const handleGuardarProducto = (e) => {
+  // --- ¡GUARDAR PRODUCTO (CONECTADO A LA API)! ---
+  const handleGuardarProducto = async (e) => {
     e.preventDefault();
     
-    // valida
     const esValido = validarFormulario();
     
     if (esValido) {
-      alert("¡Formulario válido! Guardando producto (simulación)...");
-      // aqui va la llamada a la API
-      handleCerrarModal();
+      
+      // 1. Construimos el objeto EXACTO que pide Swagger
+      const productoParaEnviar = {
+        nombre: nuevoProducto.nombre,
+        descripcion: nuevoProducto.descripcion,
+        precio: parseInt(nuevoProducto.precio),
+        stock: parseInt(nuevoProducto.stock),
+        estado: true, // Lo ponemos como 'true' por defecto
+        creacionProducto: new Date().toISOString(), // Genera la fecha string
+        imagen: nuevoProducto.imagen, // La ruta de texto
+        
+        // --- ¡EL HACK QUE ARREGLA EL ERROR DEL BACKEND! ---
+        // Asigna la Categoría ID 1 (que ya existe en tu BBDD)
+        categoria: { "id": 1 }
+        // --------------------------------------------------
+      };
+      
+      try {
+        // 2. Llama al servicio (POST /api/productos)
+        const resultado = await guardarProducto(productoParaEnviar);
+
+        if (resultado.exito) {
+          alert("¡Producto guardado en la Base de Datos!");
+          handleCerrarModal();
+          cargarProductos(); // ¡Recarga la tabla (leyendo de la API)!
+        } else {
+          setErrores({ general: resultado.error });
+        }
+      } catch (err) {
+        setErrores({ general: "Error al guardar." });
+      }
     }
   };
 
@@ -104,20 +129,22 @@ export function AdminProductosPage() {
             <thead>
               <tr>
                 <th>ID</th>
+                <th>Imagen</th>
                 <th>Nombre</th>
-                <th>Descripción</th>
                 <th>Precio</th>
                 <th>Stock</th>
                 <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
-              {/* Mapeo de productos */}
+              {/* Mapeo de productos (ahora lee de la API) */}
               {productos.map((prod) => (
                 <tr key={prod.id}>
                   <td>{prod.id}</td>
+                  <td>
+                    <img src={prod.imagen} alt={prod.nombre} style={{ width: '50px', height: '50px', objectFit: 'cover' }} />
+                  </td>
                   <td>{prod.nombre}</td>
-                  <td>{prod.descripcion}</td>
                   <td>${prod.precio.toLocaleString()}</td>
                   <td>{prod.stock}</td>
                   <td>
@@ -139,60 +166,40 @@ export function AdminProductosPage() {
             
             <form id="formProducto" onSubmit={handleGuardarProducto}>
               
-              <label>ID
-                <input 
-                  type="text" 
-                  id="id"       
-                  name="id"      
-                  value={nuevoProducto.id} 
-                  onChange={handleFormChange}
-                />
-              </label>
-              {/* mostrar error */}
-              {errores.id && <p style={{color: 'red'}}>{errores.id}</p>}
+              {/* (Quitamos el input de 'ID' porque el backend lo genera) */}
 
               <label>Nombre
-                <input 
-                  type="text" 
-                  id="nombre"   
-                  name="nombre"   
-                  value={nuevoProducto.nombre} 
-                  onChange={handleFormChange}
-                />
+                <input type="text" name="nombre" value={nuevoProducto.nombre} onChange={handleFormChange} />
               </label>
               {errores.nombre && <p style={{color: 'red'}}>{errores.nombre}</p>}
 
               <label>Descripción
-                <input 
-                  type="text" 
-                  id="descripcion"  
-                  name="descripcion"  
-                  value={nuevoProducto.descripcion} 
-                  onChange={handleFormChange}
-                />
+                <input type="text" name="descripcion" value={nuevoProducto.descripcion} onChange={handleFormChange} />
               </label>
               
               <label>Precio
-                <input 
-                  type="number" 
-                  id="precio"    
-                  name="precio"    
-                  value={nuevoProducto.precio} 
-                  onChange={handleFormChange}
-                />
+                <input type="number" name="precio" value={nuevoProducto.precio} onChange={handleFormChange} />
               </label>
               {errores.precio && <p style={{color: 'red'}}>{errores.precio}</p>}
 
               <label>Stock
-                <input 
-                  type="number" 
-                  id="stock"     
-                  name="stock"     
-                  value={nuevoProducto.stock} 
-                  onChange={handleFormChange}
-                />
+                <input type="number" name="stock" value={nuevoProducto.stock} onChange={handleFormChange} />
               </label>
               {errores.stock && <p style={{color: 'red'}}>{errores.stock}</p>}
+
+              {/* Seguimos usando el input de texto para la imagen */}
+              <label>Ruta de Imagen (Texto)
+                <input 
+                  type="text" 
+                  name="imagen" 
+                  value={nuevoProducto.imagen} 
+                  onChange={handleFormChange} 
+                  placeholder="Ej: /imagenes/Productos/Cat.png" 
+                />
+              </label>
+              {errores.imagen && <p style={{color: 'red'}}>{errores.imagen}</p>}
+              
+              {errores.general && <p style={{color: 'red'}}>{errores.general}</p>}
               
               <div className="modal-actions">
                 <button type="submit" className="button">Guardar</button>

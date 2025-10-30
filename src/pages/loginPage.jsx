@@ -1,34 +1,40 @@
 // src/pages/loginPage.jsx
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // ¡Importamos 'useNavigate'!
-import { useAuth } from '../context/authContext'; // ¡Importamos nuestro "cerebro"!
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/authContext';
 
 export function LoginPage() {
   
-  // --- ESTADO LOCAL ---
-  // Estados para guardar lo que el usuario escribe en los inputs
+  // Estados locales
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(null); // Para mostrar errores
+  const [error, setError] = useState(null);
 
-  // --- CONTEXTO Y NAVEGACIÓN ---
-  const { login } = useAuth(); // Obtenemos la función 'login' del cerebro
-  const navigate = useNavigate(); // Herramienta para redirigir al usuario
+  // Contexto y Navegación
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
-  // --- HANDLER ---
-  const handleSubmit = (e) => {
-    e.preventDefault(); // Evita que la página se recargue
-    setError(null); // Limpia errores antiguos
+  // --- ¡HANDLER ACTUALIZADO! ---
+  // Se convierte en 'async' para poder usar 'await'
+  const handleSubmit = async (e) => {
+    e.preventDefault(); 
+    setError(null); 
 
-    // Llamamos a la función 'login' del cerebro con los datos del estado
-    const exito = login(email, password);
+    try {
+      // ¡AQUÍ EL CAMBIO!
+      // Ahora 'esperamos' (await) a que la función 'login' termine
+      const exito = await login(email, password);
 
-    if (exito) {
-      // ¡Login exitoso! Redirigimos al panel de admin
-      navigate('/admin');
-    } else {
-      // Login fallido
-      setError("Correo o contraseña incorrectos. (Pista: admin@admin.com y 1234)");
+      if (exito) {
+        // Login exitoso -> redirige al panel de admin
+        navigate('/admin');
+      } else {
+        // Login fallido (la API dijo que no)
+        setError("Correo o contraseña incorrectos.");
+      }
+    } catch (err) {
+      // Error de red (ej: backend apagado)
+      setError("Error de conexión. Inténtalo más tarde.");
     }
   };
 
@@ -44,7 +50,6 @@ export function LoginPage() {
           name="email" 
           required 
           style={{ width: '100%', padding: '8px' }}
-          // Conectamos el input al estado 'email'
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
@@ -56,7 +61,6 @@ export function LoginPage() {
           name="password" 
           required 
           style={{ width: '100%', padding: '8px' }}
-          // Conectamos el input al estado 'password'
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
