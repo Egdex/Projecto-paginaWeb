@@ -1,18 +1,15 @@
 // src/componentes/cabecera.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../context/authContext'; // ¡Importamos el cerebro!
+import { useAuth } from '../context/authContext'; 
 
 export function Cabecera() {
   
-  // --- ¡AQUÍ LA MAGIA! ---
-  // Obtenemos los datos del cerebro
   const { usuario, logout } = useAuth();
 
   const handleLogout = (e) => {
     e.preventDefault();
-    logout(); // Llama a la función logout del cerebro
-    // (No necesitamos redirigir, la app se actualizará sola)
+    logout(); 
   };
 
   return (
@@ -24,15 +21,17 @@ export function Cabecera() {
           <li><Link to="/productos">Productos</Link></li>
           <li><Link to="/blog">Blog</Link></li>
           <li><Link to="/carrito">Carrito</Link></li>
-          {/* Si el usuario es admin, muestra el link a /admin */}
-          {usuario && usuario.rol === 'Administrador' && (
+          
+          {/* --- ¡AQUÍ ESTÁ EL ARREGLO! --- */}
+          {/* Comparamos con el ROL real que viene del backend ('ADMIN') */}
+          {usuario && usuario.rol === 'ADMIN' && (
             <li><Link to="/admin" style={{ color: '#d94e8f' }}>Admin</Link></li>
           )}
         </ul>
         <ul className="nav-login">
-          {/* --- AHORA ES DINÁMICO --- */}
           {usuario ? (
             <>
+              {/* Usamos el email real del objeto usuario */}
               <div id="bienvenida" style={{ marginRight: '10px', color: '#333' }}>
                 Bienvenido, {usuario.email}
               </div>

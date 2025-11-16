@@ -1,251 +1,298 @@
 // src/pages/adminUsuariosPage.jsx
-import React, { useState, useEffect } from 'react';
-import '../styles/userstyle.css';
-import { getUsuarios, guardarUsuario } from '../services/userServices.js';
+// Versión Final (con CRUD completo)
 
-// (Mini-BD de Comunas y Mapas de ID)
-const comunasPorRegion = {
-  "Metropolitana": ["Pudahuel", "Maipú", "Puente Alto", "Santiago", "Las Condes", "La Florida"],
-  "Valparaíso": ["Valparaíso", "Viña del Mar", "Quilpué", "Concón"],
-  "Biobío": ["Concepción", "Talcahuano", "Los Ángeles"]
+import React, { useState, useEffect, useContext } from 'react';
+import '../styles/userstyle.css'; // Asegúrate que aquí estén los estilos .modal
+import { AuthContext } from '../context/authContext.jsx';
+
+// Importamos todos los servicios (sin token)
+import { 
+    getUsuariosAdmin, 
+    crearUsuarioAdmin, 
+    deleteUsuarioAdmin,
+    updateUsuarioAdmin, // El que faltaba para editar
+    getRegiones,
+    getComunas
+} from '../services/userServices.js';
+
+// Un formulario vacío para resetear
+const FORMULARIO_VACIO = {
+    run: '', nombre: '', apellidos: '', email: '', 
+    password: '', rol: 'CLIENTE', regionId: '', 
+    comunaId: '', direccion: ''
 };
-// ¡AQUÍ ESTÁ LA CLAVE! Mapeamos el NOMBRE que selecciona el usuario al ID que está en la BBDD
-const regionMap = { "Metropolitana": 1, "Valparaíso": 2, "Biobío": 3 };
-const comunaMap = { "Santiago": 1, "Puente Alto": 2, "Valparaíso": 3, "Pudahuel": 4, "Maipú": 5 }; // (Asegúrate de tener estos IDs en tu BBDD)
 
 export function AdminUsuariosPage() {
 
-  // (Todos los 'useState' se quedan igual)
+  // Sacamos el usuario del cerebro
+  const { usuario } = useContext(AuthContext);
+
+  // Estados de la página
   const [usuarios, setUsuarios] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
-  const [comunasDisponibles, setComunasDisponibles] = useState([]);
-  const [nuevoUsuario, setNuevoUsuario] = useState({
-    run: '', nombre: '', apellidos: '', correo: '', password: '', rol: '', region: '', comuna: '', direccion: ''
-  });
+  const [loading, setLoading] = useState(false);
   const [errores, setErrores] = useState({});
 
-  // (useEffect, cargarUsuarios, handleFormChange, validar, abrir/cerrar modal se quedan igual)
-  useEffect(() => {
-    cargarUsuarios();
-  }, []);
+  // Estados para el Modal (Crear vs Editar)
+  const [nuevoUsuario, setNuevoUsuario] = useState(FORMULARIO_VACIO);
+  const [isEditing, setIsEditing] = useState(false); 
+  const [currentUserId, setCurrentUserId] = useState(null); 
 
+  // Estados para los <select>
+  const [regiones, setRegiones] = useState([]);
+  const [comunasMasterList, setComunasMasterList] = useState([]);
+  const [comunasDisponibles, setComunasDisponibles] = useState([]);
+  
+  // Carga todo al iniciar (si estás logueado)
+  useEffect(() => {
+    if (usuario) { 
+      cargarUsuarios();
+      cargarDatosFormulario();
+    }
+  }, [usuario]); // Se activa cuando el 'usuario' aparece
+
+  // Trae la lista de usuarios
   const cargarUsuarios = async () => {
+    setLoading(true);
     try {
-      const data = await getUsuarios();
+      const data = await getUsuariosAdmin();
       setUsuarios(data);
     } catch (error) {
       console.error("Error al cargar usuarios:", error);
+      setErrores({ general: error.message });
+    } finally {
+      setLoading(false);
     }
   };
 
+  // Trae los datos para los <select> del modal
+  const cargarDatosFormulario = async () => {
+    try {
+        const [regionesData, comunasData] = await Promise.all([
+            getRegiones(), getComunas() 
+        ]);
+        setRegiones(regionesData);
+        setComunasMasterList(comunasData); // Guarda la lista "maestra"
+    } catch (err) {
+        setErrores(prev => ({ ...prev, form: "Error al cargar regiones/comunas" }));
+    }
+  };
+
+  // Filtra las comunas (lógica de frontend)
+  useEffect(() => {
+    if (nuevoUsuario.regionId) {
+        // Filtramos la lista maestra
+        const filtradas = comunasMasterList.filter(comuna => 
+            comuna.region?.id === parseInt(nuevoUsuario.regionId)
+        );
+        setComunasDisponibles(filtradas);
+    } else {
+        setComunasDisponibles([]); // Si no hay región, vaciamos la lista
+    }
+  }, [nuevoUsuario.regionId, comunasMasterList]);
+
+  // Maneja los cambios en los inputs del formulario
   const handleFormChange = (e) => {
     const { name, value } = e.target;
     setNuevoUsuario((prev) => ({ ...prev, [name]: value }));
-    if (name === "region") {
-      const comunas = comunasPorRegion[value] || [];
-      setComunasDisponibles(comunas);
-      setNuevoUsuario((prev) => ({ ...prev, comuna: "" }));
+    // Si cambia la región, resetea la comuna
+    if (name === "regionId") {
+      setNuevoUsuario((prev) => ({ ...prev, comunaId: "" }));
     }
   };
 
-  const validarFormulario = () => {
-    let nuevosErrores = {};
-    const runRegex = /^[0-9]{7,8}-[0-9Kk]$/;
-    if (!nuevoUsuario.run) {
-      nuevosErrores.run = "El RUN es obligatorio";
-    } else if (!runRegex.test(nuevoUsuario.run)) {
-      nuevosErrores.run = "El formato del RUN es inválido (Ej: 12345678-9)";
-    }
-    if (!nuevoUsuario.nombre) nuevosErrores.nombre = "El Nombre es obligatorio";
-    if (!nuevoUsuario.apellidos) nuevosErrores.apellidos = "Los Apellidos son obligatorios";
-    if (!/\S+@\S+\.\S+/.test(nuevoUsuario.correo)) {
-      nuevosErrores.correo = "El formato de correo no es válido";
-    }
-    if (!nuevoUsuario.password) nuevosErrores.password = "La Contraseña es obligatoria"; 
-    if (!nuevoUsuario.rol) nuevosErrores.rol = "Debe seleccionar un Rol";
-    if (!nuevoUsuario.region) nuevosErrores.region = "Debe seleccionar una Región";
-    if (!nuevoUsuario.comuna) nuevosErrores.comuna = "Debe seleccionar una Comuna";
+  // --- LÓGICA DE MODALES ---
 
-    setErrores(nuevosErrores);
-    return Object.keys(nuevosErrores).length === 0;
+  // Botón "Agregar Usuario" (el rosado)
+  const handleAbrirModalCrear = () => {
+    setIsEditing(false); // Estamos "Creando"
+    setNuevoUsuario(FORMULARIO_VACIO); // Limpia el form
+    setErrores({});
+    setModalVisible(true); // ¡Abre el modal!
   };
 
-  const handleAbrirModal = () => {
+  // Botón "Modificar" (el ✏️)
+  const handleAbrirModalEditar = (user) => {
+    setIsEditing(true); // Estamos "Editando"
+    setCurrentUserId(user.id); // Guardamos el ID
+    // Rellenamos el formulario con los datos del usuario
     setNuevoUsuario({
-      run: '', nombre: '', apellidos: '', correo: '', password: '', rol: '', region: '', comuna: '', direccion: ''
+      run: user.run,
+      nombre: user.nombre,
+      apellidos: user.apellidos,
+      email: user.email,
+      password: '', // La clave no se carga, solo se cambia si se escribe
+      rol: user.rol,
+      direccion: user.direccion || '',
+      regionId: user.region?.id || '', 
+      comunaId: user.comuna?.id || '',
     });
     setErrores({});
-    setComunasDisponibles([]);
-    setModalVisible(true);
-  };
-  const handleCerrarModal = () => {
-    setModalVisible(false);
+    setModalVisible(true); // ¡Abre el modal!
   };
 
-  // --- ¡GUARDAR USUARIO (CORREGIDO OTRA VEZ)! ---
-  const handleGuardarUsuario = async (e) => {
+  const handleCerrarModal = () => setModalVisible(false);
+
+  // Botón "Guardar" (el de adentro del modal)
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setErrores({}); 
-    const esValido = validarFormulario();
     
-    if (esValido) {
-      
-      // 1. Mapeo de IDs (Buscamos el ID de la comuna/region seleccionada)
-      const regionId = regionMap[nuevoUsuario.region];
-      const comunaId = comunaMap[nuevoUsuario.comuna];
-      
-      // 2. Mapeo de Rol
-      const rolApi = nuevoUsuario.rol === 'Administrador' ? 'ADMIN' : 'CLIENTE';
+    // Armamos el JSON para el backend
+    const payload = {
+      run: nuevoUsuario.run,
+      nombre: nuevoUsuario.nombre,
+      apellidos: nuevoUsuario.apellidos,
+      email: nuevoUsuario.email,
+      rol: nuevoUsuario.rol, 
+      estado: true,
+      direccion: nuevoUsuario.direccion,
+      comuna: { "id": parseInt(nuevoUsuario.comunaId) },
+      region: { "id": parseInt(nuevoUsuario.regionId) }
+    };
 
-      // 3. Construimos el JSON que pide Swagger
-      const usuarioParaEnviar = {
-        run: nuevoUsuario.run,
-        nombre: nuevoUsuario.nombre,
-        apellidos: nuevoUsuario.apellidos,
-        email: nuevoUsuario.correo,
-        password: nuevoUsuario.password,
-        rol: rolApi, 
-        estado: true,
-        direccion: nuevoUsuario.direccion,
-        creacionUsu: new Date().toISOString(),
-        
-        // --- ¡EL HACK FINAL! ---
-        // En vez de mandar el objeto, le mandamos SOLO el ID
-        // de la comuna y región que YA EXISTEN en la BBDD.
-        comuna: { "id": comunaId },
-        region: { "id": regionId }
-        // -----------------------
-      };
-      
+    // Si el usuario escribió una clave nueva, la mandamos
+    if (nuevoUsuario.password) {
+      payload.password = nuevoUsuario.password;
+    }
+
+    try {
+      if (isEditing) {
+        // Lógica de MODIFICAR
+        await updateUsuarioAdmin(currentUserId, payload);
+        alert("¡Usuario actualizado con éxito!");
+      } else {
+        // Lógica de CREAR
+        await crearUsuarioAdmin(payload);
+        alert("¡Usuario creado con éxito!");
+      }
+      handleCerrarModal();
+      cargarUsuarios(); // Recargamos la tabla
+    } catch (error) {
+      console.error("Error al guardar usuario:", error);
+      setErrores({ general: error.message });
+    }
+  };
+
+  // Borrar usuario (el 🗑️)
+  const handleBorrarUsuario = async (id) => {
+    if (window.confirm(`¿Seguro que quieres eliminar al usuario ID ${id}?`)) {
       try {
-        // 4. Llama al servicio (POST /api/usuarios)
-        const resultado = await guardarUsuario(usuarioParaEnviar);
-
-        if (resultado.exito) {
-          alert("¡Usuario guardado en la Base de Datos!");
-          handleCerrarModal();
-          cargarUsuarios(); 
-        } else {
-          setErrores({ general: resultado.error || "Error al guardar." });
-        }
-      } catch (err) {
-        setErrores({ general: "Error de red al guardar." });
+        await deleteUsuarioAdmin(id);
+        alert('Usuario eliminado');
+        cargarUsuarios(); 
+      } catch (error) {
+        alert(`Error al eliminar: ${error.message}`);
       }
     }
   };
+  
+  // Protección por si acaso
+  if (!usuario) {
+    return <h2>Acceso Denegado.</h2>;
+  }
 
+  // --- RENDERIZADO (El HTML) ---
   return (
     <div className="menusito"> 
-      {/* ... (header y main se quedan igual) ... */}
-      <header className="la barrita de arriba">
-        <h1>Usuarios</h1>
-      </header>
+      <header className="la barrita de arriba"><h1>Usuarios</h1></header>
       <main className="el coso que muestra el otro coso">
-        <button id="btnAgregarUsuario" className="button" onClick={handleAbrirModal}>
+        
+        {/* Botón A (el rosado) */}
+        <button id="btnAgregarUsuario" className="button" onClick={handleAbrirModalCrear}>
           Agregar Usuario
         </button>
+        
         <section className="card">
           <h2>Lista de Usuarios</h2>
+          {errores.general && <p style={{color: 'red'}}>{errores.general}</p>}
           <table id="tablaUsuarios" className="table">
-            {/* ... (thead y tbody se quedan igual) ... */}
-             <thead>
+            <thead>
               <tr>
                 <th>RUN</th>
                 <th>Nombre</th>
-                <th>Apellidos</th>
                 <th>Correo</th>
                 <th>Rol</th>
                 <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
-              {usuarios.map((user) => (
-                <tr key={user.id}>
-                  <td>{user.run}</td>
-                  <td>{user.nombre}</td>
-                  <td>{user.apellidos}</td>
-                  <td>{user.email}</td>
-                  <td>{user.rol}</td>
-                  <td>
-                    <button>✏️</button>
-                    <button>🗑️</button>
-                  </td>
-                </tr>
-              ))}
+              {loading ? (
+                <tr><td colSpan="5">Cargando...</td></tr>
+              ) : (
+                usuarios.map((user) => (
+                  <tr key={user.id}>
+                    <td>{user.run}</td>
+                    <td>{user.nombre} {user.apellidos}</td>
+                    <td>{user.email}</td>
+                    <td>{user.rol}</td>
+                    <td>
+                      {/* Botón Editar (✏️) */}
+                      <button onClick={() => handleAbrirModalEditar(user)}>✏️</button>
+                      {/* Botón Borrar (🗑️) */}
+                      <button onClick={() => handleBorrarUsuario(user.id)}>🗑️</button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </section>
       </main>
 
-      {/* Modal (dinamico) */}
+      {/* --- MODAL (El formulario que aparece) --- */}
       {modalVisible && (
         <div id="modalUsuario" className="modal">
           <div className="modal-content card">
-            <h2 id="modalUsuarioTitulo">Agregar Usuario</h2>
             
-            <form id="formUsuario" onSubmit={handleGuardarUsuario}>
+            {/* Título dinámico */}
+            <h2>{isEditing ? 'Modificar Usuario' : 'Agregar Usuario'}</h2>
+            
+            <form id="formUsuario" onSubmit={handleSubmit}>
               
-              {/* ... (Todos los inputs de antes se quedan igual) ... */}
-               <label>RUN 
-                <input type="text" name="run" value={nuevoUsuario.run} onChange={handleFormChange} placeholder="Ej: 12345678-9"/>
+              <label>RUN <input type="text" name="run" value={nuevoUsuario.run} onChange={handleFormChange} /></label>
+              <label>Nombre <input type="text" name="nombre" value={nuevoUsuario.nombre} onChange={handleFormChange} /></label>
+              <label>Apellidos <input type="text" name="apellidos" value={nuevoUsuario.apellidos} onChange={handleFormChange} /></label>
+              <label>Correo <input type="email" name="email" value={nuevoUsuario.email} onChange={handleFormChange} /></label>
+              <label>Contraseña 
+                <input type="password" name="password" value={nuevoUsuario.password} onChange={handleFormChange} 
+                       placeholder={isEditing ? '(Dejar en blanco para no cambiar)' : 'Contraseña'} />
               </label>
-              {errores.run && <p style={{color: 'red'}}>{errores.run}</p>}
-               <label>Nombre 
-                <input type="text" name="nombre" value={nuevoUsuario.nombre} onChange={handleFormChange} />
-              </label>
-              {errores.nombre && <p style={{color: 'red'}}>{errores.nombre}</p>}
-               <label>Apellidos 
-                <input type="text" name="apellidos" value={nuevoUsuario.apellidos} onChange={handleFormChange} />
-              </label>
-              {errores.apellidos && <p style={{color: 'red'}}>{errores.apellidos}</p>}
-               <label>Correo Electrónico 
-                <input type="email" name="correo" value={nuevoUsuario.correo} onChange={handleFormChange} />
-              </label>
-              {errores.correo && <p style={{color: 'red'}}>{errores.correo}</p>}
-               <label>Contraseña
-                <input type="password" name="password" value={nuevoUsuario.password} onChange={handleFormChange} />
-              </label>
-              {errores.password && <p style={{color: 'red'}}>{errores.password}</p>}
-               <label>Rol
+              <label>Dirección <input type="text" name="direccion" value={nuevoUsuario.direccion} onChange={handleFormChange} /></label>
+              
+              <label>Rol
                 <select name="rol" value={nuevoUsuario.rol} onChange={handleFormChange}>
-                  <option value="">Seleccione un rol</option>
-                  <option value="Administrador">Administrador</option>
-                  <option value="Cliente">Cliente</option>
+                  <option value="CLIENTE">Cliente</option>
+                  <option value="ADMIN">Administrador</option>
+                  <option value="VENDEDOR">Vendedor</option>
                 </select>
               </label>
-              {errores.rol && <p style={{color: 'red'}}>{errores.rol}</p>}
-               <label>Región
-                <select name="region" value={nuevoUsuario.region} onChange={handleFormChange}>
-                  <option value="">Seleccione una región</option>
-                  {Object.keys(comunasPorRegion).map((region) => (
-                    <option key={region} value={region}>{region}</option>
+
+              <label>Región
+                <select name="regionId" value={nuevoUsuario.regionId} onChange={handleFormChange} required>
+                  <option value="">Seleccione región</option>
+                  {regiones.map((region) => (
+                    <option key={region.id} value={region.id}>{region.nombre}</option>
                   ))}
                 </select>
               </label>
-              {errores.region && <p style={{color: 'red'}}>{errores.region}</p>}
-               <label>Comuna
-                <select name="comuna" value={nuevoUsuario.comuna} onChange={handleFormChange} disabled={comunasDisponibles.length === 0}>
-                  <option value="">Seleccione una comuna</option>
+              <label>Comuna
+                <select name="comunaId" value={nuevoUsuario.comunaId} onChange={handleFormChange} required disabled={comunasDisponibles.length === 0}>
+                  <option value="">Seleccione comuna</option>
                   {comunasDisponibles.map((comuna) => (
-                    <option key={comuna} value={comuna}>{comuna}</option>
+                    <option key={comuna.id} value={comuna.id}>{comuna.nombre}</option>
                   ))}
                 </select>
-              </label>
-              {errores.comuna && <p style={{color: 'red'}}>{errores.comuna}</p>}
-               <label>Dirección
-                <input type="text" name="direccion" value={nuevoUsuario.direccion} onChange={handleFormChange} />
               </label>
               
+              {errores.form && <p style={{color: 'red'}}>{errores.form}</p>}
               {errores.general && <p style={{color: 'red'}}>{errores.general}</p>}
-
+              
               <div className="modal-actions">
                 <button type="submit" className="button">Guardar</button>
-                <button type="button" className="button danger" onClick={handleCerrarModal}>
-                  Cancelar
-                </button>
+                <button type="button" className="button danger" onClick={handleCerrarModal}>Cancelar</button>
               </div>
             </form>
-            
           </div>
         </div>
       )}

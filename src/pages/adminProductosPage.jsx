@@ -1,130 +1,165 @@
 // src/pages/adminProductosPage.jsx
-import React, { useState, useEffect } from 'react';
-import '../styles/productostyle.css';
-// ¡Importamos las funciones que usan la API!
-import { getProductos, guardarProducto } from '../services/productServices.js';
+// Versión Final (con CRUD completo)
+
+import React, { useState, useEffect, useContext } from 'react';
+import '../styles/productostyle.css'; // ¡Asegúrate que aquí estén los estilos .modal!
+import { AuthContext } from '../context/authContext.jsx';
+
+// Importamos todos los servicios (sin token)
+import { 
+  getProductosAdmin, 
+  guardarProductoAdmin,
+  deleteProductoAdmin,
+  updateProductoAdmin // El que faltaba
+} from '../services/productServices.js';
+
+// Un formulario vacío para resetear
+const FORMULARIO_VACIO = {
+    nombre: '', 
+    descripcion: '', 
+    precio: 0, 
+    stock: 0, 
+    imagen: ''
+};
 
 export function AdminProductosPage() {
   
-  // Estados de la pagina
+  const { usuario } = useContext(AuthContext);
+
   const [productos, setProductos] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
-  
-  // estado formulario (los campos del modal)
-  const [nuevoProducto, setNuevoProducto] = useState({
-    nombre: '',
-    descripcion: '',
-    precio: 0,
-    stock: 0,
-    imagen: ''
-  });
-  
-  // estado errores
+  const [loading, setLoading] = useState(false);
   const [errores, setErrores] = useState({});
 
-  // Carga inicial de productos (desde la API)
-  useEffect(() => {
-    cargarProductos();
-  }, []);
+  // Estados para el Modal (Crear vs Editar)
+  const [nuevoProducto, setNuevoProducto] = useState(FORMULARIO_VACIO);
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentProductId, setCurrentProductId] = useState(null);
 
-  // Función para cargar (reutilizable)
+  // Carga inicial
+  useEffect(() => {
+    if (usuario) { 
+      cargarProductos();
+    }
+  }, [usuario]);
+
+  // Trae la lista de productos
   const cargarProductos = async () => {
+    setLoading(true);
     try {
-      const data = await getProductos(); 
+      const data = await getProductosAdmin();
       setProductos(data);
     } catch (error) {
       console.error("Error al cargar productos:", error);
+      setErrores({ general: error.message });
+    } finally {
+      setLoading(false);
     }
   };
 
-  // maneja cambios en el form
+  // Maneja los cambios en los inputs del formulario
   const handleFormChange = (e) => {
     const { name, value } = e.target;
-    setNuevoProducto((prev) => ({
-      ...prev,
-      [name]: value 
-    }));
+    setNuevoProducto((prev) => ({ ...prev, [name]: value }));
   };
 
-  // validar form
-  const validarFormulario = () => {
-    let nuevosErrores = {};
-    if (!nuevoProducto.nombre) nuevosErrores.nombre = "El Nombre es obligatorio";
-    if (nuevoProducto.precio <= 0) nuevosErrores.precio = "El Precio debe ser mayor a 0";
-    if (nuevoProducto.stock <= 0) nuevosErrores.stock = "El Stock debe ser mayor a 0"; // (Cambiado de <0 a <=0)
-    if (!nuevoProducto.imagen) nuevosErrores.imagen = "La Ruta de Imagen es obligatoria";
+  // --- LÓGICA DE MODALES ---
 
-    setErrores(nuevosErrores);
-    return Object.keys(nuevosErrores).length === 0;
+  // Botón "Agregar Producto" (el de afuera)
+  const handleAbrirModalCrear = () => {
+    setIsEditing(false);
+    setNuevoProducto(FORMULARIO_VACIO);
+    setErrores({});
+    setModalVisible(true); // ¡Abre el modal!
   };
 
-  // limpiar form y abrir modal
-  const handleAbrirModal = () => {
+  // Botón "Modificar" (el ✏️)
+  const handleAbrirModalEditar = (prod) => {
+    setIsEditing(true);
+    setCurrentProductId(prod.id);
+    // Rellenamos el formulario con los datos
     setNuevoProducto({
-      nombre: '', descripcion: '', precio: 0, stock: 0, imagen: '' 
+      nombre: prod.nombre,
+      descripcion: prod.descripcion,
+      precio: prod.precio,
+      stock: prod.stock,
+      imagen: prod.imagen,
     });
     setErrores({});
-    setModalVisible(true);
+    setModalVisible(true); // ¡Abre el modal!
   };
 
-  const handleCerrarModal = () => {
-    setModalVisible(false);
-  };
-  
-  // --- ¡GUARDAR PRODUCTO (CONECTADO A LA API)! ---
-  const handleGuardarProducto = async (e) => {
+  const handleCerrarModal = () => setModalVisible(false);
+
+  // Botón "Guardar" (el de adentro del modal)
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrores({});
     
-    const esValido = validarFormulario();
-    
-    if (esValido) {
-      
-      // 1. Construimos el objeto EXACTO que pide Swagger
-      const productoParaEnviar = {
-        nombre: nuevoProducto.nombre,
-        descripcion: nuevoProducto.descripcion,
-        precio: parseInt(nuevoProducto.precio),
-        stock: parseInt(nuevoProducto.stock),
-        estado: true, // Lo ponemos como 'true' por defecto
-        creacionProducto: new Date().toISOString(), // Genera la fecha string
-        imagen: nuevoProducto.imagen, // La ruta de texto
-        
-        // --- ¡EL HACK QUE ARREGLA EL ERROR DEL BACKEND! ---
-        // Asigna la Categoría ID 1 (que ya existe en tu BBDD)
-        categoria: { "id": 1 }
-        // --------------------------------------------------
-      };
-      
-      try {
-        // 2. Llama al servicio (POST /api/productos)
-        const resultado = await guardarProducto(productoParaEnviar);
+    // Armamos el JSON
+    const payload = {
+      nombre: nuevoProducto.nombre,
+      descripcion: nuevoProducto.descripcion,
+      precio: parseInt(nuevoProducto.precio),
+      stock: parseInt(nuevoProducto.stock),
+      estado: true, // Siempre activo
+      imagen: nuevoProducto.imagen,
+      categoria: { "id": 1 } // El "Hack" de la categoría 1
+    };
 
-        if (resultado.exito) {
-          alert("¡Producto guardado en la Base de Datos!");
-          handleCerrarModal();
-          cargarProductos(); // ¡Recarga la tabla (leyendo de la API)!
-        } else {
-          setErrores({ general: resultado.error });
-        }
-      } catch (err) {
-        setErrores({ general: "Error al guardar." });
+    try {
+      if (isEditing) {
+        // Lógica de MODIFICAR
+        await updateProductoAdmin(currentProductId, payload);
+        alert("¡Producto actualizado con éxito!");
+      } else {
+        // Lógica de CREAR
+        await guardarProductoAdmin(payload);
+        alert("¡Producto creado con éxito!");
+      }
+      
+      handleCerrarModal();
+      cargarProductos(); // Recargamos la tabla
+
+    } catch (error) {
+      console.error("Error al guardar producto:", error);
+      // Ojo: Si el error es el del 'stock', saldrá esta alerta
+      alert(`Error al guardar: ${error.message}`);
+      setErrores({ general: error.message });
+    }
+  };
+
+  // Borrar producto (el 🗑️)
+  const handleBorrarProducto = async (id) => {
+    if (window.confirm(`¿Seguro que quieres eliminar el producto ID ${id}?`)) {
+      try {
+        await deleteProductoAdmin(id);
+        alert('Producto eliminado');
+        cargarProductos();
+      } catch (error) {
+        alert(`Error al eliminar: ${error.message}`);
       }
     }
   };
+  
+  if (!usuario) {
+    return <h2>Acceso Denegado.</h2>;
+  }
 
+  // --- RENDERIZADO (El HTML) ---
   return (
     <div className="menusito"> 
-      <header className="la barrita de arriba">
-        <h1>Productos</h1>
-      </header>
-
+      <header className="la barrita de arriba"><h1>Productos</h1></header>
       <main className="el coso que muestra el otro coso">
-        <button id="btnAgregarProducto" className="button" onClick={handleAbrirModal}>
+        
+        {/* Botón A (el de afuera) */}
+        <button id="btnAgregarProducto" className="button" onClick={handleAbrirModalCrear}>
           Agregar Producto
         </button>
-
-         <section className="card">
+        
+        <section className="card">
           <h2>Lista de Productos</h2>
+          {errores.general && <p style={{color: 'red'}}>{errores.general}</p>}
           <table id="tablaProductos" className="table">
             <thead>
               <tr>
@@ -137,57 +172,51 @@ export function AdminProductosPage() {
               </tr>
             </thead>
             <tbody>
-              {/* Mapeo de productos (ahora lee de la API) */}
-              {productos.map((prod) => (
-                <tr key={prod.id}>
-                  <td>{prod.id}</td>
-                  <td>
-                    <img src={prod.imagen} alt={prod.nombre} style={{ width: '50px', height: '50px', objectFit: 'cover' }} />
-                  </td>
-                  <td>{prod.nombre}</td>
-                  <td>${prod.precio.toLocaleString()}</td>
-                  <td>{prod.stock}</td>
-                  <td>
-                    <button>✏️</button>
-                    <button>🗑️</button>
-                  </td>
-                </tr>
-              ))}
+              {loading ? (
+                <tr><td colSpan="6">Cargando...</td></tr>
+              ) : (
+                productos.map((prod) => (
+                  <tr key={prod.id}>
+                    <td>{prod.id}</td>
+                    <td><img src={prod.imagen} alt={prod.nombre} style={{ width: '50px', height: '50px', objectFit: 'cover' }} /></td>
+                    <td>{prod.nombre}</td>
+                    <td>${prod.precio.toLocaleString()}</td>
+                    <td>{prod.stock}</td>
+                    <td>
+                      {/* Botón Editar (✏️) */}
+                      <button onClick={() => handleAbrirModalEditar(prod)}>✏️</button>
+                      {/* Botón Borrar (🗑️) */}
+                      <button onClick={() => handleBorrarProducto(prod.id)}>🗑️</button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </section>
       </main>
 
-      {/* Modal (dinamico) */}
+      {/* --- MODAL (El formulario que aparece) --- */}
       {modalVisible && (
         <div id="modalProducto" className="modal">
           <div className="modal-content card">
-            <h2 id="modalProductoTitulo">Agregar Producto</h2>
             
-            <form id="formProducto" onSubmit={handleGuardarProducto}>
+            <h2>{isEditing ? 'Modificar Producto' : 'Agregar Producto'}</h2>
+            
+            <form id="formProducto" onSubmit={handleSubmit}>
               
-              {/* (Quitamos el input de 'ID' porque el backend lo genera) */}
-
               <label>Nombre
                 <input type="text" name="nombre" value={nuevoProducto.nombre} onChange={handleFormChange} />
               </label>
-              {errores.nombre && <p style={{color: 'red'}}>{errores.nombre}</p>}
-
               <label>Descripción
                 <input type="text" name="descripcion" value={nuevoProducto.descripcion} onChange={handleFormChange} />
               </label>
-              
               <label>Precio
                 <input type="number" name="precio" value={nuevoProducto.precio} onChange={handleFormChange} />
               </label>
-              {errores.precio && <p style={{color: 'red'}}>{errores.precio}</p>}
-
               <label>Stock
                 <input type="number" name="stock" value={nuevoProducto.stock} onChange={handleFormChange} />
               </label>
-              {errores.stock && <p style={{color: 'red'}}>{errores.stock}</p>}
-
-              {/* Seguimos usando el input de texto para la imagen */}
               <label>Ruta de Imagen (Texto)
                 <input 
                   type="text" 
@@ -197,7 +226,6 @@ export function AdminProductosPage() {
                   placeholder="Ej: /imagenes/Productos/Cat.png" 
                 />
               </label>
-              {errores.imagen && <p style={{color: 'red'}}>{errores.imagen}</p>}
               
               {errores.general && <p style={{color: 'red'}}>{errores.general}</p>}
               

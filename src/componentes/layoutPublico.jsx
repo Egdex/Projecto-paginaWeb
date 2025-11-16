@@ -1,22 +1,23 @@
 // src/componentes/layoutPublico.jsx
+// (Asegúrate que tenga el <div>!)
+
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-
-// (Asegúrate que la ruta a 'cabecera' y 'footer' esté bien)
 import { Cabecera } from './cabecera'; 
 import Footer from './footer';
 
-// Esta es la ÚNICA función LayoutPublico
 export function LayoutPublico() {
   return (
-    <>
+    // --- ¡Este div es la clave! ---
+    <div className="layout-publico-wrapper">
       <Cabecera />
 
+      {/* El <main> es donde se carga el login, home, etc. */}
       <main>
         <Outlet /> 
       </main>
 
       <Footer />
-    </>
+    </div>
   );
 }

@@ -1,4 +1,6 @@
 // src/main.jsx
+// ¡Versión final con la ruta del blog/detalle!
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
@@ -15,6 +17,11 @@ import { BlogPage } from './pages/blogPage.jsx';
 import { CarritoPage } from './pages/carritoPage.jsx';
 import { LoginPage } from './pages/loginPage.jsx';
 import { RegistroPage } from './pages/registroPage.jsx';
+import { CheckoutPage } from './pages/CheckoutPage.jsx';
+
+// --- ¡AQUÍ ESTÁ LA LÍNEA 1 QUE FALTA! ---
+// Importamos la página nueva que creamos
+import { DetalleBlogPage } from './pages/DetalleBlogPage.jsx'; 
 
 // --- Layout y Páginas de Admin ---
 import { LayoutAdmin } from './componentes/layoutAdmin.jsx';
@@ -24,7 +31,7 @@ import { AdminUsuariosPage } from './pages/adminUsuariosPage.jsx';
 
 // --- Cerebros (Contexts) y Guardia ---
 import { AuthProvider } from './context/authContext.jsx';
-import { CartProvider } from './context/cartContext.jsx'; // <-- ¡Importado!
+import { CartProvider } from './context/cartContext.jsx';
 import { RutaProtegida } from './componentes/rutaProtegida.jsx';
 
 // 3. Define las rutas
@@ -36,14 +43,22 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <HomePage /> },
       { path: 'productos', element: <Productos /> },
-      { path: 'blog', element: <BlogPage /> },
+      { path: 'blog', element: <BlogPage /> }, // La lista de posts
+      
+      // --- ¡AQUÍ ESTÁ LA LÍNEA 2 QUE FALTA! ---
+      // Esta es la ruta "dinámica" para el detalle.
+      // El ':idPost' es el número (1 o 2) que viene de la URL.
+      { path: 'blog/:idPost', element: <DetalleBlogPage /> },
+
       { path: 'carrito', element: <CarritoPage /> },
       { path: 'login', element: <LoginPage /> },
       { path: 'registro', element: <RegistroPage /> },
+      { path: 'comprar', element: <CheckoutPage /> },
     ],
   },
   {
     // --- RUTAS DE ADMIN (Protegidas) ---
+    // (Esto se queda igual)
     path: '/',
     element: <RutaProtegida />,
     children: [
@@ -64,9 +79,6 @@ const router = createBrowserRouter([
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <AuthProvider>
-      {/* --- ¡AQUÍ ESTÁ LA MAGIA! ---
-          El CartProvider DEBE envolver al RouterProvider
-          o a los componentes que usan el carrito. */}
       <CartProvider> 
         <RouterProvider router={router} />
       </CartProvider>

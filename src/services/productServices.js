@@ -1,56 +1,93 @@
 // src/services/productServices.js
+// Versión Final (usa Sesiones/Cookies, sin tokens)
 
-// URL base del backend (Asegúrate que el puerto sea el 8080)
 const API_URL = 'http://localhost:8080';
 
-// ---
-// FUNCIÓN 1: Trae los productos (¡AHORA DESDE LA API!)
-// ---
-export const getProductos = async () => {
+// ======================================================
+// === FUNCIÓN PÚBLICA (Para la tienda) ===
+// ======================================================
+
+// La usamos en la página de /productos pública
+export const getProductosPublic = async () => {
   try {
-    // Llamamos al endpoint que vimos en Swagger: GET /api/productos
     const response = await fetch(`${API_URL}/api/productos`);
-    
     if (!response.ok) {
-      // Si el backend da un error (ej: 500)
       throw new Error('Error al cargar productos desde la API');
     }
-    
-    const data = await response.json();
-    return data; // La API debería devolver la lista de productos
-
+    return await response.json();
   } catch (error) {
-    console.error("Error en getProductos:", error);
-    return []; // Devuelve una lista vacía en caso de error
+    console.error("Error en getProductosPublic:", error);
+    throw error;
   }
 };
 
-// ---
-// FUNCIÓN 2: Guarda un producto nuevo (¡AHORA EN LA API!)
-// ---
-export const guardarProducto = async (nuevoProducto) => {
+// ======================================================
+// === FUNCIONES DE ADMIN (La cookie viaja sola) ===
+// ======================================================
+
+// Para la tabla de /admin/productos
+export const getProductosAdmin = async () => {
   try {
-    // Llamamos al endpoint de Swagger: POST /api/productos
+    const response = await fetch(`${API_URL}/api/productos`);
+    if (!response.ok) throw new Error('Error al cargar productos (Admin)');
+    return await response.json();
+  } catch (error) {
+    console.error("Error en getProductosAdmin:", error);
+    throw error;
+  }
+};
+
+// Para el botón "Guardar" (Crear)
+export const guardarProductoAdmin = async (nuevoProducto) => {
+  try {
     const response = await fetch(`${API_URL}/api/productos`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      // (Asegúrate de que el backend espere este formato.
-      // ¡Revisaremos el 'Request Body' en Swagger para esto después!)
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(nuevoProducto) 
     });
-
-    if (response.ok) {
-      return { exito: true };
-    } else {
-      // Si falla (ej: 400 Bad Request o 500)
+    if (!response.ok) {
       const errorData = await response.json();
-      return { exito: false, error: errorData.message || "Error del servidor" };
+      throw new Error(errorData.message || "Error al guardar producto");
     }
-
+    return await response.json();
   } catch (error) {
-    console.error("Error en guardarProducto:", error);
-    return { exito: false, error: "Error de red." };
+    console.error("Error en guardarProductoAdmin:", error);
+    throw error; 
+  }
+};
+
+// Para el botón "Guardar" (Modificar)
+export const updateProductoAdmin = async (id, productoData) => {
+  try {
+    const response = await fetch(`${API_URL}/api/productos/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(productoData) 
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Error al actualizar producto");
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error en updateProductoAdmin:", error);
+    throw error;
+  }
+};
+
+// Para el botón de la basura (🗑️)
+export const deleteProductoAdmin = async (id) => {
+  try {
+    const response = await fetch(`${API_URL}/api/productos/${id}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Error al eliminar producto");
+    }
+    return { exito: true };
+  } catch (error) {
+    console.error("Error en deleteProductoAdmin:", error);
+    throw error;
   }
 };
